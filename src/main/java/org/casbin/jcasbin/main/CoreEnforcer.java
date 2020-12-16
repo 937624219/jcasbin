@@ -27,13 +27,15 @@ import org.casbin.jcasbin.model.Assertion;
 import org.casbin.jcasbin.model.FunctionMap;
 import org.casbin.jcasbin.model.Model;
 import org.casbin.jcasbin.persist.Adapter;
+import org.casbin.jcasbin.persist.Watcher;
 import org.casbin.jcasbin.persist.WatcherEx;
 import org.casbin.jcasbin.persist.file_adapter.FilteredAdapter;
-import org.casbin.jcasbin.persist.Watcher;
 import org.casbin.jcasbin.rbac.DefaultRoleManager;
 import org.casbin.jcasbin.rbac.RoleManager;
 import org.casbin.jcasbin.util.BuiltInFunctions;
 import org.casbin.jcasbin.util.Util;
+import org.springframework.data.redis.core.BoundHashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -78,10 +80,8 @@ public class CoreEnforcer {
      *
      * @return an empty model.
      */
-    public static Model newModel() {
-        Model m = new Model();
-
-        return m;
+    public static Model newModel(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        return new Model(redisTemplate);
     }
 
     /**
@@ -90,11 +90,9 @@ public class CoreEnforcer {
      * @param text the model text.
      * @return the model.
      */
-    public static Model newModel(String text) {
-        Model m = new Model();
-
+    public static Model newModel(String text, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        Model m = new Model(redisTemplate);
         m.loadModelFromText(text);
-
         return m;
     }
 
@@ -102,14 +100,14 @@ public class CoreEnforcer {
      * newModel creates a model.
      *
      * @param modelPath the path of the model file.
-     * @param unused unused parameter, just for differentiating with
-     *               newModel(String text).
+     * @param unused    unused parameter, just for differentiating with
+     *                  newModel(String text).
      * @return the model.
      */
-    public static Model newModel(String modelPath, String unused) {
-        Model m = new Model();
+    public static Model newModel(String modelPath, String unused, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        Model m = new Model(redisTemplate);
 
-        if (!modelPath.equals("")) {
+        if (!"".equals(modelPath)) {
             m.loadModel(modelPath);
         }
 
@@ -122,8 +120,8 @@ public class CoreEnforcer {
      * Because the policy is attached to a model, so the policy is invalidated
      * and needs to be reloaded by calling LoadPolicy().
      */
-    public void loadModel() {
-        model = newModel();
+    public void loadModel(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        model = newModel(redisTemplate);
         model.loadModel(this.modelPath);
         model.printModel();
         fm = FunctionMap.loadFunctionMap();
@@ -342,8 +340,9 @@ public class CoreEnforcer {
 
                         functions.put(key, function);
                     }
-                    if (model.model.containsKey("g")) {
-                        for (Map.Entry<String, Assertion> entry : model.model.get("g").entrySet()) {
+                    Map<String, Assertion> entries = model.getRedisKey("g").entries();
+                    if (entries != null) {
+                        for (Map.Entry<String, Assertion> entry : entries.entrySet()) {
                             String key = entry.getKey();
                             Assertion ast = entry.getValue();
 
@@ -356,34 +355,34 @@ public class CoreEnforcer {
                     for (AviatorFunction f : functions.values()) {
                         aviatorEval.addFunction(f);
                     }
-
                     modelModCount = model.getModCount();
                 }
             }
         }
-        String expString = model.model.get("m").get("m").value;
+        String expString = model.getRedisKey("m").get("m").value;
         Expression expression = aviatorEval.compile(expString, true);
 
         Effect policyEffects[];
         float matcherResults[];
         int policyLen;
-        if ((policyLen = model.model.get("p").get("p").policy.size()) != 0) {
+        Assertion astp = model.getRedisKey("p").get("p");
+        Assertion aste = model.getRedisKey("e").get("e");
+        if ((policyLen = astp.policy.size()) != 0) {
             policyEffects = new Effect[policyLen];
             matcherResults = new float[policyLen];
 
-            for (int i = 0; i < model.model.get("p").get("p").policy.size(); i ++) {
-                List<String> pvals = model.model.get("p").get("p").policy.get(i);
+            for (int i = 0; i < astp.policy.size(); i++) {
+                List<String> pvals = astp.policy.get(i);
 
-                // Util.logPrint("Policy Rule: " + pvals);
                 // Select the rule based on request size
                 Map<String, Object> parameters = new HashMap<>();
                 getRTokens(parameters, rvals);
-                for (int j = 0; j < model.model.get("p").get("p").tokens.length; j ++) {
-                    String token = model.model.get("p").get("p").tokens[j];
+                for (int j = 0; j < astp.tokens.length; j++) {
+                    String token = astp.tokens[j];
                     parameters.put(token, pvals.get(j));
                 }
 
-                Object result =  expression.execute(parameters);
+                Object result = expression.execute(parameters);
                 // Util.logPrint("Result: " + result);
 
                 if (result instanceof Boolean) {
@@ -403,9 +402,9 @@ public class CoreEnforcer {
                 }
                 if (parameters.containsKey("p_eft")) {
                     String eft = (String) parameters.get("p_eft");
-                    if (eft.equals("allow")) {
+                    if ("allow".equals(eft)) {
                         policyEffects[i] = Effect.Allow;
-                    } else if (eft.equals("deny")) {
+                    } else if ("deny".equals(eft)) {
                         policyEffects[i] = Effect.Deny;
                     } else {
                         policyEffects[i] = Effect.Indeterminate;
@@ -414,7 +413,7 @@ public class CoreEnforcer {
                     policyEffects[i] = Effect.Allow;
                 }
 
-                if (model.model.get("e").get("e").value.equals("priority(p_eft) || deny")) {
+                if ("priority(p_eft) || deny".equals(aste.value)) {
                     break;
                 }
             }
@@ -423,12 +422,13 @@ public class CoreEnforcer {
             matcherResults = new float[1];
 
             Map<String, Object> parameters = new HashMap<>();
-            for (int j = 0; j < model.model.get("r").get("r").tokens.length; j ++) {
-                String token = model.model.get("r").get("r").tokens[j];
+            Assertion astr = model.getRedisKey("r").get("r");
+            for (int j = 0; j < astr.tokens.length; j++) {
+                String token = astr.tokens[j];
                 parameters.put(token, rvals[j]);
             }
-            for (int j = 0; j < model.model.get("p").get("p").tokens.length; j ++) {
-                String token = model.model.get("p").get("p").tokens[j];
+            for (int j = 0; j < astp.tokens.length; j++) {
+                String token = astp.tokens[j];
                 parameters.put(token, "");
             }
 
@@ -442,10 +442,10 @@ public class CoreEnforcer {
             }
         }
 
-        boolean result = eft.mergeEffects(model.model.get("e").get("e").value, policyEffects, matcherResults);
+        boolean result = eft.mergeEffects(aste.value, policyEffects, matcherResults);
 
         StringBuilder reqStr = new StringBuilder("Request: ");
-        for (int i = 0; i < rvals.length; i ++) {
+        for (int i = 0; i < rvals.length; i++) {
             String rval = rvals[i].toString();
 
             if (i != rvals.length - 1) {
@@ -460,33 +460,42 @@ public class CoreEnforcer {
         return result;
     }
 
-    private void getRTokens(Map<String, Object> parameters, Object ...rvals) {
-      for(String rKey : model.model.get("r").keySet()) {
-        if(!(rvals.length == model.model.get("r").get(rKey).tokens.length)) { continue; }
-        for (int j = 0; j < model.model.get("r").get(rKey).tokens.length; j ++) {
-          String token = model.model.get("r").get(rKey).tokens[j];
-          parameters.put(token, rvals[j]);
+    private void getRTokens(Map<String, Object> parameters, Object... rvals) {
+        BoundHashOperations<String, String, Assertion> astr = model.getRedisKey("r");
+        if (astr == null) {
+            return;
         }
+        for (String rKey : astr.entries().keySet()) {
+            String[] tokens = astr.get(rKey).tokens;
+            if (rvals.length != tokens.length) {
+                continue;
+            }
+            for (int j = 0; j < tokens.length; j++) {
+                String token = tokens[j];
+                parameters.put(token, rvals[j]);
+            }
 
-      }
+        }
     }
 
-    public boolean validateEnforce(Object... rvals){
-        return  validateEnforceSection("r",rvals);
+    public boolean validateEnforce(Object... rvals) {
+        return validateEnforceSection("r", rvals);
     }
 
     private boolean validateEnforceSection(String section, Object... rvals) {
-        int expectedParamSize = getModel().model.entrySet().stream()
-                .filter(stringMapEntry -> stringMapEntry.getKey().equals(section))
-                .flatMap(stringMapEntry -> stringMapEntry.getValue().entrySet().stream())
-                .filter(stringAssertionEntry -> stringAssertionEntry.getKey().equals(section))
-                .findFirst().orElseThrow(
-                        () -> new CasbinMatcherException("Could not find " + section + " definition in model"))
-                .getValue().tokens.length;
+        Map<String, Assertion> assertionMap = getModel().getRedisKey(section).entries();
+        if (assertionMap == null) {
+            throw new CasbinMatcherException("Could not find " + section + " definition in model");
+        }
+        Assertion ast = assertionMap.get(section);
+        if (ast == null) {
+            throw new CasbinMatcherException("Could not find " + section + " definition in model");
+        }
+        int expectedParamSize = ast.tokens.length;
 
         if (rvals.length != expectedParamSize) {
             Util.logPrintfWarn("Incorrect number of attributes to check for policy (expected {} but got {})",
-                    expectedParamSize, rvals.length);
+                expectedParamSize, rvals.length);
             return rvals.length >= expectedParamSize;
         }
         return true;

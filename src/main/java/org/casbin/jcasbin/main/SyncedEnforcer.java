@@ -14,11 +14,14 @@
 
 package org.casbin.jcasbin.main;
 
+import org.casbin.jcasbin.model.Assertion;
 import org.casbin.jcasbin.model.Model;
 import org.casbin.jcasbin.persist.Adapter;
 import org.casbin.jcasbin.persist.Watcher;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -27,14 +30,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class SyncedEnforcer extends Enforcer {
 
-    private final static ReadWriteLock READ_WRITE_LOCK = new ReentrantReadWriteLock();
+    private static final ReadWriteLock READ_WRITE_LOCK = new ReentrantReadWriteLock();
 
     /**
      * ;
      * SyncedEnforcer is the default constructor.
      */
-    public SyncedEnforcer() {
-        super();
+    public SyncedEnforcer(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        super(redisTemplate);
     }
 
     /**
@@ -43,8 +46,8 @@ public class SyncedEnforcer extends Enforcer {
      * @param modelPath  the path of the model file.
      * @param policyFile the path of the policy file.
      */
-    public SyncedEnforcer(String modelPath, String policyFile) {
-        super(modelPath, policyFile);
+    public SyncedEnforcer(String modelPath, String policyFile, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        super(modelPath, policyFile, redisTemplate);
     }
 
     /**
@@ -53,8 +56,8 @@ public class SyncedEnforcer extends Enforcer {
      * @param modelPath the path of the model file.
      * @param adapter   the adapter.
      */
-    public SyncedEnforcer(String modelPath, Adapter adapter) {
-        super(modelPath, adapter);
+    public SyncedEnforcer(String modelPath, Adapter adapter, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        super(modelPath, adapter, redisTemplate);
     }
 
     /**
@@ -81,8 +84,8 @@ public class SyncedEnforcer extends Enforcer {
      *
      * @param modelPath the path of the model file.
      */
-    public SyncedEnforcer(String modelPath) {
-        super(modelPath);
+    public SyncedEnforcer(String modelPath, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        super(modelPath, redisTemplate);
     }
 
     /**
@@ -92,8 +95,8 @@ public class SyncedEnforcer extends Enforcer {
      * @param policyFile the path of the policy file.
      * @param enableLog  whether to enable Casbin's log.
      */
-    public SyncedEnforcer(String modelPath, String policyFile, boolean enableLog) {
-        super(modelPath, policyFile, enableLog);
+    public SyncedEnforcer(String modelPath, String policyFile, boolean enableLog, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        super(modelPath, policyFile, enableLog, redisTemplate);
     }
 
     /**
@@ -198,8 +201,8 @@ public class SyncedEnforcer extends Enforcer {
      * getAllSubjects gets the list of subjects that show up in the current policy.
      *
      * @return all the subjects in "p" policy rules. It actually collects the
-     *         0-index elements of "p" policy rules. So make sure your subject
-     *         is the 0-index element, like (sub, obj, act). Duplicates are removed.
+     * 0-index elements of "p" policy rules. So make sure your subject
+     * is the 0-index element, like (sub, obj, act). Duplicates are removed.
      */
     @Override
     public List<String> getAllSubjects() {
@@ -215,9 +218,9 @@ public class SyncedEnforcer extends Enforcer {
      * getAllObjects gets the list of objects that show up in the current policy.
      *
      * @return all the objects in "p" policy rules. It actually collects the
-     *         1-index elements of "p" policy rules. So make sure your object
-     *         is the 1-index element, like (sub, obj, act).
-     *         Duplicates are removed.
+     * 1-index elements of "p" policy rules. So make sure your object
+     * is the 1-index element, like (sub, obj, act).
+     * Duplicates are removed.
      */
     @Override
     public List<String> getAllObjects() {
@@ -234,9 +237,9 @@ public class SyncedEnforcer extends Enforcer {
      *
      * @param ptype the policy type, can be "p", "p2", "p3", ..
      * @return all the objects in policy rules of the ptype type. It actually
-     *         collects the 1-index elements of the policy rules. So make sure
-     *         your object is the 1-index element, like (sub, obj, act).
-     *         Duplicates are removed.
+     * collects the 1-index elements of the policy rules. So make sure
+     * your object is the 1-index element, like (sub, obj, act).
+     * Duplicates are removed.
      */
     @Override
     public List<String> getAllNamedObjects(String ptype) {
@@ -252,9 +255,9 @@ public class SyncedEnforcer extends Enforcer {
      * getAllActions gets the list of actions that show up in the current policy.
      *
      * @return all the actions in "p" policy rules. It actually collects
-     *         the 2-index elements of "p" policy rules. So make sure your action
-     *         is the 2-index element, like (sub, obj, act).
-     *         Duplicates are removed.
+     * the 2-index elements of "p" policy rules. So make sure your action
+     * is the 2-index element, like (sub, obj, act).
+     * Duplicates are removed.
      */
     @Override
     public List<String> getAllActions() {
@@ -271,9 +274,9 @@ public class SyncedEnforcer extends Enforcer {
      *
      * @param ptype the policy type, can be "p", "p2", "p3", ..
      * @return all the actions in policy rules of the ptype type. It actually
-     *         collects the 2-index elements of the policy rules. So make sure
-     *         your action is the 2-index element, like (sub, obj, act).
-     *         Duplicates are removed.
+     * collects the 2-index elements of the policy rules. So make sure
+     * your action is the 2-index element, like (sub, obj, act).
+     * Duplicates are removed.
      */
     @Override
     public List<String> getAllNamedActions(String ptype) {
@@ -289,9 +292,9 @@ public class SyncedEnforcer extends Enforcer {
      * getAllRoles gets the list of roles that show up in the current policy.
      *
      * @return all the roles in "g" policy rules. It actually collects
-     *         the 1-index elements of "g" policy rules. So make sure your
-     *         role is the 1-index element, like (sub, role).
-     *         Duplicates are removed.
+     * the 1-index elements of "g" policy rules. So make sure your
+     * role is the 1-index element, like (sub, role).
+     * Duplicates are removed.
      */
     @Override
     public List<String> getAllRoles() {
@@ -308,9 +311,9 @@ public class SyncedEnforcer extends Enforcer {
      *
      * @param ptype the policy type, can be "g", "g2", "g3", ..
      * @return all the subjects in policy rules of the ptype type. It actually
-     *         collects the 0-index elements of the policy rules. So make
-     *         sure your subject is the 0-index element, like (sub, obj, act).
-     *         Duplicates are removed.
+     * collects the 0-index elements of the policy rules. So make
+     * sure your subject is the 0-index element, like (sub, obj, act).
+     * Duplicates are removed.
      */
     @Override
     public List<String> getAllNamedRoles(String ptype) {
@@ -340,7 +343,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * getFilteredPolicy gets all the authorization rules in the policy, field filters can be specified.
      *
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
      *                    means not to match this field.
      * @return the filtered "p" policy rules.
@@ -374,8 +377,8 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * getFilteredNamedPolicy gets all the authorization rules in the named policy, field filters can be specified.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param ptype       the policy type, can be "p", "p2", "p3", ..
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
      *                    means not to match this field.
      * @return the filtered "p" policy rules of the specified ptype.
@@ -424,9 +427,9 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * getFilteredGroupingPolicy gets all the role inheritance rules in the policy, field filters can be specified.
      *
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
-                          means not to match this field.
+     *                    means not to match this field.
      * @return the filtered "g" policy rules.
      */
     @Override
@@ -458,8 +461,8 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * getFilteredNamedGroupingPolicy gets all the role inheritance rules in the policy, field filters can be specified.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param ptype       the policy type, can be "g", "g2", "g3", ..
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
      *                    means not to match this field.
      * @return the filtered "g" policy rules of the specified ptype.
@@ -509,7 +512,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * hasNamedPolicy determines whether a named authorization rule exists.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
+     * @param ptype  the policy type, can be "p", "p2", "p3", ..
      * @param params the "p" policy rule.
      * @return whether the rule exists.
      */
@@ -522,10 +525,11 @@ public class SyncedEnforcer extends Enforcer {
             READ_WRITE_LOCK.readLock().unlock();
         }
     }
+
     /**
      * hasNamedPolicy determines whether a named authorization rule exists.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
+     * @param ptype  the policy type, can be "p", "p2", "p3", ..
      * @param params the "p" policy rule.
      * @return whether the rule exists.
      */
@@ -581,7 +585,7 @@ public class SyncedEnforcer extends Enforcer {
      * If the rule already exists, the function returns false and the rule will not be added.
      * Otherwise the function returns true by adding the new rule.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
+     * @param ptype  the policy type, can be "p", "p2", "p3", ..
      * @param params the "p" policy rule.
      * @return succeeds or not.
      */
@@ -600,7 +604,7 @@ public class SyncedEnforcer extends Enforcer {
      * If the rule already exists, the function returns false and the rule will not be added.
      * Otherwise the function returns true by adding the new rule.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
+     * @param ptype  the policy type, can be "p", "p2", "p3", ..
      * @param params the "p" policy rule.
      * @return succeeds or not.
      */
@@ -649,7 +653,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeFilteredPolicy removes an authorization rule from the current policy, field filters can be specified.
      *
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
      *                    means not to match this field.
      * @return succeeds or not.
@@ -667,7 +671,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeNamedPolicy removes an authorization rule from the current named policy.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
+     * @param ptype  the policy type, can be "p", "p2", "p3", ..
      * @param params the "p" policy rule.
      * @return succeeds or not.
      */
@@ -684,7 +688,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeNamedPolicy removes an authorization rule from the current named policy.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
+     * @param ptype  the policy type, can be "p", "p2", "p3", ..
      * @param params the "p" policy rule.
      * @return succeeds or not.
      */
@@ -701,8 +705,8 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeFilteredNamedPolicy removes an authorization rule from the current named policy, field filters can be specified.
      *
-     * @param ptype the policy type, can be "p", "p2", "p3", ..
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param ptype       the policy type, can be "p", "p2", "p3", ..
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
      *                    means not to match this field.
      * @return succeeds or not.
@@ -752,7 +756,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * hasNamedGroupingPolicy determines whether a named role inheritance rule exists.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
+     * @param ptype  the policy type, can be "g", "g2", "g3", ..
      * @param params the "g" policy rule.
      * @return whether the rule exists.
      */
@@ -769,7 +773,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * hasNamedGroupingPolicy determines whether a named role inheritance rule exists.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
+     * @param ptype  the policy type, can be "g", "g2", "g3", ..
      * @param params the "g" policy rule.
      * @return whether the rule exists.
      */
@@ -824,7 +828,7 @@ public class SyncedEnforcer extends Enforcer {
      * If the rule already exists, the function returns false and the rule will not be added.
      * Otherwise the function returns true by adding the new rule.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
+     * @param ptype  the policy type, can be "g", "g2", "g3", ..
      * @param params the "g" policy rule.
      * @return succeeds or not.
      */
@@ -843,7 +847,7 @@ public class SyncedEnforcer extends Enforcer {
      * If the rule already exists, the function returns false and the rule will not be added.
      * Otherwise the function returns true by adding the new rule.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
+     * @param ptype  the policy type, can be "g", "g2", "g3", ..
      * @param params the "g" policy rule.
      * @return succeeds or not.
      */
@@ -892,7 +896,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeFilteredGroupingPolicy removes a role inheritance rule from the current policy, field filters can be specified.
      *
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
      *                    means not to match this field.
      * @return succeeds or not.
@@ -910,7 +914,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeNamedGroupingPolicy removes a role inheritance rule from the current named policy.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
+     * @param ptype  the policy type, can be "g", "g2", "g3", ..
      * @param params the "g" policy rule.
      * @return succeeds or not.
      */
@@ -927,7 +931,7 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeNamedGroupingPolicy removes a role inheritance rule from the current named policy.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
+     * @param ptype  the policy type, can be "g", "g2", "g3", ..
      * @param params the "g" policy rule.
      * @return succeeds or not.
      */
@@ -944,8 +948,8 @@ public class SyncedEnforcer extends Enforcer {
     /**
      * removeFilteredNamedGroupingPolicy removes a role inheritance rule from the current named policy, field filters can be specified.
      *
-     * @param ptype the policy type, can be "g", "g2", "g3", ..
-     * @param fieldIndex the policy rule's start index to be matched.
+     * @param ptype       the policy type, can be "g", "g2", "g3", ..
+     * @param fieldIndex  the policy rule's start index to be matched.
      * @param fieldValues the field values to be matched, value ""
      *                    means not to match this field.
      * @return succeeds or not.
@@ -1250,23 +1254,6 @@ public class SyncedEnforcer extends Enforcer {
             READ_WRITE_LOCK.readLock().unlock();
         }
     }
-
-    /**
-     * getUsersForRoleInDomain gets the users that has a role inside a domain.
-     *
-     * @param name   the user.
-     * @param domain the domain.
-     * @return the users for role in a domain.
-     */
-//    @Override
-//    public List<String> getUsersForRoleInDomain(String name, String domain) {
-//        try {
-//            READ_WRITE_LOCK.readLock().lock();
-//            return super.getUsersForRoleInDomain(name, domain);
-//        } finally {
-//            READ_WRITE_LOCK.readLock().unlock();
-//        }
-//    }
 
     /**
      * getRolesForUserInDomain gets the roles that a user has inside a domain.

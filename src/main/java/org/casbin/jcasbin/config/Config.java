@@ -26,10 +26,10 @@ public class Config {
     private static final String DEFAULT_COMMENT = "#";
     private static final String DEFAULT_COMMENT_SEM = ";";
 
-    private ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock lock = new ReentrantLock();
 
     // Section:key=value
-    private Map<String, Map<String, String>> data;
+    private final Map<String, Map<String, String>> data;
 
     /**
      * Config represents the configuration parser.
@@ -70,7 +70,7 @@ public class Config {
      * addConfig adds a new section->key:value to the configuration.
      */
     private boolean addConfig(String section, String option, String value) {
-        if (section.equals("")) {
+        if ("".equals(section)) {
             section = DEFAULT_SECTION;
         }
 
@@ -110,7 +110,6 @@ public class Config {
             } else {
                 break;
             }
-
 
             line = line.trim();
             if (line.startsWith(DEFAULT_COMMENT)) {
@@ -165,8 +164,8 @@ public class Config {
 
     public String[] getStrings(String key) {
         String v = get(key);
-        if (v.equals("")) {
-            return null;
+        if ("".equals(v)) {
+            return new String[]{};
         }
         return v.split(",");
     }

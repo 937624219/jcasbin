@@ -24,10 +24,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Util {
-    public static boolean enableLog = true;
-    private static Pattern evalReg = Pattern.compile("\\beval\\(([^),]*)\\)");
+    private static final Pattern evalReg = Pattern.compile("\\beval\\(([^),]*)\\)");
 
-    private static Logger LOGGER = LoggerFactory.getLogger("org.casbin.jcasbin");
+    public static boolean enableLog = true;
+    private static final Logger LOGGER = LoggerFactory.getLogger("org.casbin.jcasbin");
+
+    private Util() {
+    }
 
     /**
      * logPrint prints the log.
@@ -44,7 +47,7 @@ public class Util {
      * logPrintf prints the log with the format.
      *
      * @param format the format of the log.
-     * @param v the log.
+     * @param v      the log.
      */
     public static void logPrintf(String format, String... v) {
         if (enableLog) {
@@ -57,7 +60,7 @@ public class Util {
      * logPrintf prints the log with the format as a warning.
      *
      * @param format the format of the log.
-     * @param v the log.
+     * @param v      the log.
      */
     public static void logPrintfWarn(String format, Object... v) {
         if (enableLog) {
@@ -69,7 +72,7 @@ public class Util {
      * logPrintf prints the log with the format as an error.
      *
      * @param format the format of the log.
-     * @param v the log.
+     * @param v      the log.
      */
     public static void logPrintfError(String format, Object... v) {
         if (enableLog) {
@@ -95,7 +98,7 @@ public class Util {
         StringBuffer sb = new StringBuffer();
 
         while (m.find()) {
-            m.appendReplacement(sb, m.group().replace(".", "_") );
+            m.appendReplacement(sb, m.group().replace(".", "_"));
         }
 
         m.appendTail(sb);
@@ -113,7 +116,7 @@ public class Util {
         if (pos == -1) {
             return s;
         }
-        return s.substring(0,pos).trim();
+        return s.substring(0, pos).trim();
     }
 
     /**
@@ -134,7 +137,7 @@ public class Util {
             return false;
         }
 
-        for (int i = 0; i < a.size(); i ++) {
+        for (int i = 0; i < a.size(); i++) {
             if (!a.get(i).equals(b.get(i))) {
                 return false;
             }
@@ -160,7 +163,7 @@ public class Util {
             return false;
         }
 
-        for (int i = 0; i < a.size(); i ++) {
+        for (int i = 0; i < a.size(); i++) {
             if (!arrayEquals(a.get(i), b.get(i))) {
                 return false;
             }
@@ -208,7 +211,7 @@ public class Util {
      */
     public static String[] splitCommaDelimited(String s) {
         if (s == null) {
-            return null;
+            return new String[0];
         }
         return s.trim().split("\\s*,\\s*");
     }
@@ -234,7 +237,7 @@ public class Util {
         Collections.sort(a);
         Collections.sort(b);
 
-        for (int i = 0; i < a.size(); i ++) {
+        for (int i = 0; i < a.size(); i++) {
             if (!a.get(i).equals(b.get(i))) {
                 return false;
             }

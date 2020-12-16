@@ -69,7 +69,7 @@ class Role {
             if (i == 0) {
                 names.append(role.name);
             } else {
-                names.append(", " + role.name);
+                names.append(", ").append(role.name);
             }
         }
         return name + " < " + names;

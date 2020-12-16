@@ -30,46 +30,47 @@ public class DefaultEffector implements Effector {
     @Override
     public boolean mergeEffects(String expr, Effect[] effects, float[] results) {
         boolean result;
-        if (expr.equals("some(where (p_eft == allow))")) {
-            result = false;
-            for (Effect eft : effects) {
-                if (eft == Effect.Allow) {
-                    result = true;
-                    break;
-                }
-            }
-        } else if (expr.equals("!some(where (p_eft == deny))")) {
-            result = true;
-            for (Effect eft : effects) {
-                if (eft == Effect.Deny) {
-                    result = false;
-                    break;
-                }
-            }
-        } else if (expr.equals("some(where (p_eft == allow)) && !some(where (p_eft == deny))")) {
-            result = false;
-            for (Effect eft : effects) {
-                if (eft == Effect.Allow) {
-                    result = true;
-                } else if (eft == Effect.Deny) {
-                    result = false;
-                    break;
-                }
-            }
-        } else if (expr.equals("priority(p_eft) || deny")) {
-            result = false;
-            for (Effect eft : effects) {
-                if (eft != Effect.Indeterminate) {
+        switch (expr) {
+            case "some(where (p_eft == allow))":
+                result = false;
+                for (Effect eft : effects) {
                     if (eft == Effect.Allow) {
                         result = true;
-                    } else {
-                        result = false;
+                        break;
                     }
-                    break;
                 }
-            }
-        } else {
-            throw new UnsupportedOperationException("unsupported effect");
+                break;
+            case "!some(where (p_eft == deny))":
+                result = true;
+                for (Effect eft : effects) {
+                    if (eft == Effect.Deny) {
+                        result = false;
+                        break;
+                    }
+                }
+                break;
+            case "some(where (p_eft == allow)) && !some(where (p_eft == deny))":
+                result = false;
+                for (Effect eft : effects) {
+                    if (eft == Effect.Allow) {
+                        result = true;
+                    } else if (eft == Effect.Deny) {
+                        result = false;
+                        break;
+                    }
+                }
+                break;
+            case "priority(p_eft) || deny":
+                result = false;
+                for (Effect eft : effects) {
+                    if (eft != Effect.Indeterminate) {
+                        result = eft == Effect.Allow;
+                        break;
+                    }
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException("unsupported effect");
         }
 
         return result;

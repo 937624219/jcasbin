@@ -14,13 +14,15 @@
 
 package org.casbin.jcasbin.model;
 
-import static org.casbin.jcasbin.util.Util.splitCommaDelimited;
-
 import org.casbin.jcasbin.config.Config;
 import org.casbin.jcasbin.util.Util;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static org.casbin.jcasbin.util.Util.splitCommaDelimited;
 
 /**
  * Model represents the whole access control model.
@@ -40,8 +42,8 @@ public class Model extends Policy {
     // used by CoreEnforcer to detect changes to Model
     protected int modCount;
 
-    public Model() {
-        model = new HashMap<>();
+    public Model(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        super(redisTemplate);
     }
 
     public int getModCount() {
@@ -56,8 +58,8 @@ public class Model extends Policy {
     /**
      * addDef adds an assertion to the model.
      *
-     * @param sec the section, "p" or "g".
-     * @param key the policy type, "p", "p2", .. or "g", "g2", ..
+     * @param sec   the section, "p" or "g".
+     * @param key   the policy type, "p", "p2", .. or "g", "g2", ..
      * @param value the policy rule, separated by ", ".
      * @return succeeds or not.
      */
@@ -66,24 +68,20 @@ public class Model extends Policy {
         ast.key = key;
         ast.value = value;
 
-        if (ast.value.equals("")) {
+        if ("".equals(ast.value)) {
             return false;
         }
 
-        if (sec.equals("r") || sec.equals("p")) {
+        if ("r".equals(sec) || "p".equals(sec)) {
             ast.tokens = splitCommaDelimited(ast.value);
-            for (int i = 0; i < ast.tokens.length; i ++) {
+            for (int i = 0; i < ast.tokens.length; i++) {
                 ast.tokens[i] = key + "_" + ast.tokens[i];
             }
         } else {
             ast.value = Util.removeComments(Util.escapeAssertion(ast.value));
         }
 
-        if (!model.containsKey(sec)) {
-            model.put(sec, new HashMap<>());
-        }
-
-        model.get(sec).put(key, ast);
+        this.getRedisKey(sec).put(key, ast);
         modCount++;
         return true;
     }
@@ -102,7 +100,7 @@ public class Model extends Policy {
             if (!loadAssertion(model, cfg, sec, sec + getKeySuffix(i))) {
                 break;
             } else {
-                i ++;
+                i++;
             }
         }
     }
@@ -147,13 +145,13 @@ public class Model extends Policy {
     private String saveSectionToText(String sec) {
         StringBuilder res = new StringBuilder("[" + sectionNameMap.get(sec) + "]\n");
 
-        Map<String, Assertion> section = model.get(sec);
+        Map<String, Assertion> section = this.getRedisKey(sec).entries();
         if (section == null) {
             return "";
         }
 
         for (Map.Entry<String, Assertion> entry : section.entrySet()) {
-            res.append(String.format("%s = %s\n", entry.getKey(), entry.getValue().value.replace("_", ".")));
+            res.append(entry.getKey()).append(" = ").append(entry.getValue().value.replace("_", ".")).append("\n");
         }
 
         return res.toString();
@@ -175,7 +173,7 @@ public class Model extends Policy {
         String g = saveSectionToText("g");
         g = g.replace(".", "_");
         res.append(g);
-        if (!g.equals("")) {
+        if (!"".equals(g)) {
             res.append("\n");
         }
 
@@ -191,9 +189,13 @@ public class Model extends Policy {
      */
     public void printModel() {
         Util.logPrint("Model:");
-        for (Map.Entry<String, Map<String, Assertion>> entry : model.entrySet()) {
-            for (Map.Entry<String, Assertion> entry2 : entry.getValue().entrySet()) {
-                Util.logPrintf("%s.%s: %s", entry.getKey(), entry2.getKey(), entry2.getValue().value);
+        List<String> keys = this.getAllKeys();
+        for (String key : keys) {
+            Map<String, Assertion> entries = this.getRedisKey(key).entries();
+            if (entries != null) {
+                for (Map.Entry<String, Assertion> entry2 : entries.entrySet()) {
+                    Util.logPrintf("%s.%s: %s", key, entry2.getKey(), entry2.getValue().value);
+                }
             }
         }
     }

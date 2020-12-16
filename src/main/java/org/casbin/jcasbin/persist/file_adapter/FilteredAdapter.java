@@ -8,7 +8,7 @@ import org.casbin.jcasbin.persist.Helper;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -31,7 +31,8 @@ public class FilteredAdapter implements Adapter {
 
     /**
      * loadFilteredPolicy loads only policy rules that match the filter.
-     * @param model the model.
+     *
+     * @param model  the model.
      * @param filter the filter used to specify which type of policy should be loaded.
      * @throws CasbinAdapterException if the file path or the type of the filter is incorrect.
      */
@@ -60,7 +61,7 @@ public class FilteredAdapter implements Adapter {
      */
     private void loadFilteredPolicyFile(Model model, Filter filter, Helper.loadPolicyLineHandler<String, Model> handler) throws CasbinAdapterException {
         try (FileInputStream fis = new FileInputStream(filepath)) {
-            List<String> lines = IOUtils.readLines(fis, Charset.forName("UTF-8"));
+            List<String> lines = IOUtils.readLines(fis, StandardCharsets.UTF_8);
             for (String line : lines) {
                 line = line.trim();
                 if (filterLine(line, filter)) {
@@ -121,7 +122,7 @@ public class FilteredAdapter implements Adapter {
     /**
      * @return true if have any filter roles.
      */
-    public boolean isFiltered(){
+    public boolean isFiltered() {
         return isFiltered;
     }
 

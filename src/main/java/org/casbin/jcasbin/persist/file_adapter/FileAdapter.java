@@ -23,7 +23,7 @@ import org.casbin.jcasbin.persist.Helper;
 import org.casbin.jcasbin.util.Util;
 
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,18 +97,19 @@ public class FileAdapter implements Adapter {
         savePolicyFile(String.join("\n", policy));
     }
 
-    private List<String> getModelPolicy(Model model, String ptype) {
+    private List<String> getModelPolicy(Model model, String sec) {
         List<String> policy = new ArrayList<>();
-        model.model.get(ptype).forEach((k, v) -> {
+        model.getRedisKey(sec).entries().forEach((k, v) -> {
             List<String> p = v.policy.parallelStream().map(x -> k + ", " + Util.arrayToString(x)).collect(Collectors.toList());
             policy.addAll(p);
+            model.getRedisKey(sec).put(k, v);
         });
         return policy;
     }
 
     private void loadPolicyData(Model model, Helper.loadPolicyLineHandler<String, Model> handler, InputStream inputStream) {
         try {
-            List<String> lines = IOUtils.readLines(inputStream, Charset.forName("UTF-8"));
+            List<String> lines = IOUtils.readLines(inputStream, StandardCharsets.UTF_8);
             lines.forEach(x -> handler.accept(x, model));
         } catch (IOException e) {
             e.printStackTrace();
@@ -118,7 +119,7 @@ public class FileAdapter implements Adapter {
 
     private void savePolicyFile(String text) {
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
-            IOUtils.write(text, fos, Charset.forName("UTF-8"));
+            IOUtils.write(text, fos, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
             throw new CasbinAdapterException("Policy save error");

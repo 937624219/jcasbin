@@ -47,7 +47,7 @@ class InternalEnforcer extends CoreEnforcer {
 
         model.addPolicy(sec, ptype, rule);
 
-        if (sec.equals("g")) {
+        if ("g".equals(sec)) {
             List<List<String>> rules = new ArrayList<>();
             rules.add(rule);
             buildIncrementalRoleLinks(Model.PolicyOperations.POLICY_ADD, ptype, rules);
@@ -87,7 +87,7 @@ class InternalEnforcer extends CoreEnforcer {
 
         model.addPolicies(sec, ptype, rules);
 
-        if (sec.equals("g")) {
+        if ("g".equals(sec)) {
             buildIncrementalRoleLinks(Model.PolicyOperations.POLICY_ADD, ptype, rules);
         }
 
@@ -100,7 +100,8 @@ class InternalEnforcer extends CoreEnforcer {
 
     /**
      * buildIncrementalRoleLinks provides incremental build the role inheritance relations.
-     * @param op Policy operations.
+     *
+     * @param op    Policy operations.
      * @param ptype policy type.
      * @param rules the rules.
      */
@@ -129,7 +130,7 @@ class InternalEnforcer extends CoreEnforcer {
             return false;
         }
 
-        if (sec.equals("g")) {
+        if ("g".equals(sec)) {
             List<List<String>> rules = new ArrayList<>();
             rules.add(rule);
             buildIncrementalRoleLinks(Model.PolicyOperations.POLICY_REMOVE, ptype, rules);
@@ -173,7 +174,7 @@ class InternalEnforcer extends CoreEnforcer {
             return false;
         }
 
-        if (sec.equals("g")) {
+        if ("g".equals(sec)) {
             buildIncrementalRoleLinks(Model.PolicyOperations.POLICY_REMOVE, ptype, rules);
         }
 
@@ -206,13 +207,13 @@ class InternalEnforcer extends CoreEnforcer {
         }
 
         List<List<String>> effects = model.removeFilteredPolicyReturnsEffects(sec, ptype, fieldIndex, fieldValues);
-        boolean ruleRemoved = effects.size() > 0;
+        boolean ruleRemoved = !effects.isEmpty();
 
         if (!ruleRemoved) {
             return false;
         }
 
-        if (sec.equals("g")) {
+        if ("g".equals(sec)) {
             buildIncrementalRoleLinks(Model.PolicyOperations.POLICY_REMOVE, ptype, effects);
         }
 

@@ -14,14 +14,17 @@
 
 package org.casbin.jcasbin.main;
 
+import org.casbin.jcasbin.model.Assertion;
 import org.casbin.jcasbin.model.FunctionMap;
 import org.casbin.jcasbin.model.Model;
 import org.casbin.jcasbin.persist.Adapter;
 import org.casbin.jcasbin.persist.file_adapter.FileAdapter;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Enforcer = ManagementEnforcer + RBAC API.
@@ -30,36 +33,35 @@ public class Enforcer extends ManagementEnforcer {
     /**
      * Enforcer is the default constructor.
      */
-    public Enforcer() {
-        this("", "");
+    public Enforcer(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        this("", "", redisTemplate);
     }
 
     /**
      * Enforcer initializes an enforcer with a model file and a policy file.
      *
-     * @param modelPath the path of the model file.
+     * @param modelPath  the path of the model file.
      * @param policyFile the path of the policy file.
      */
-    public Enforcer(String modelPath, String policyFile) {
-        this(modelPath, new FileAdapter(policyFile));
+    public Enforcer(String modelPath, String policyFile, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        this(modelPath, new FileAdapter(policyFile), redisTemplate);
     }
 
     /**
      * Enforcer initializes an enforcer with a database adapter.
      *
      * @param modelPath the path of the model file.
-     * @param adapter the adapter.
+     * @param adapter   the adapter.
      */
-    public Enforcer(String modelPath, Adapter adapter) {
-        this(newModel(modelPath, ""), adapter);
-
+    public Enforcer(String modelPath, Adapter adapter, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        this(newModel(modelPath, "", redisTemplate), adapter);
         this.modelPath = modelPath;
     }
 
     /**
      * Enforcer initializes an enforcer with a model and a database adapter.
      *
-     * @param m the model.
+     * @param m       the model.
      * @param adapter the adapter.
      */
     public Enforcer(Model m, Adapter adapter) {
@@ -91,19 +93,19 @@ public class Enforcer extends ManagementEnforcer {
      *
      * @param modelPath the path of the model file.
      */
-    public Enforcer(String modelPath) {
-        this(modelPath, "");
+    public Enforcer(String modelPath, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        this(modelPath, "", redisTemplate);
     }
 
     /**
      * Enforcer initializes an enforcer with a model file, a policy file and an enable log flag.
      *
-     * @param modelPath the path of the model file.
+     * @param modelPath  the path of the model file.
      * @param policyFile the path of the policy file.
-     * @param enableLog whether to enable Casbin's log.
+     * @param enableLog  whether to enable Casbin's log.
      */
-    public Enforcer(String modelPath, String policyFile, boolean enableLog) {
-        this(modelPath, new FileAdapter(policyFile));
+    public Enforcer(String modelPath, String policyFile, boolean enableLog, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+        this(modelPath, new FileAdapter(policyFile), redisTemplate);
         this.enableLog(enableLog);
     }
 
@@ -115,7 +117,7 @@ public class Enforcer extends ManagementEnforcer {
      */
     public List<String> getRolesForUser(String name) {
         try {
-            return model.model.get("g").get("g").rm.getRoles(name);
+            return model.getRedisKey("g").get("g").rm.getRoles(name);
         } catch (IllegalArgumentException e) {
             if (!"error: name does not exist".equals(e.getMessage())) {
                 throw e;
@@ -132,7 +134,7 @@ public class Enforcer extends ManagementEnforcer {
      */
     public List<String> getUsersForRole(String name) {
         try {
-            return model.model.get("g").get("g").rm.getUsers(name);
+            return model.getRedisKey("g").get("g").rm.getUsers(name);
         } catch (IllegalArgumentException e) {
             if (!"error: name does not exist".equals(e.getMessage())) {
                 throw e;
@@ -244,7 +246,7 @@ public class Enforcer extends ManagementEnforcer {
      * addPermissionForUser adds a permission for a user or role.
      * Returns false if the user or role already has the permission (aka not affected).
      *
-     * @param user the user.
+     * @param user       the user.
      * @param permission the permission, usually be (obj, act). It is actually the rule without the subject.
      * @return succeeds or not.
      */
@@ -261,7 +263,7 @@ public class Enforcer extends ManagementEnforcer {
      * addPermissionForUser adds a permission for a user or role.
      * Returns false if the user or role already has the permission (aka not affected).
      *
-     * @param user the user.
+     * @param user       the user.
      * @param permission the permission, usually be (obj, act). It is actually the rule without the subject.
      * @return succeeds or not.
      */
@@ -273,7 +275,7 @@ public class Enforcer extends ManagementEnforcer {
      * deletePermissionForUser deletes a permission for a user or role.
      * Returns false if the user or role does not have the permission (aka not affected).
      *
-     * @param user the user.
+     * @param user       the user.
      * @param permission the permission, usually be (obj, act). It is actually the rule without the subject.
      * @return succeeds or not.
      */
@@ -290,7 +292,7 @@ public class Enforcer extends ManagementEnforcer {
      * deletePermissionForUser deletes a permission for a user or role.
      * Returns false if the user or role does not have the permission (aka not affected).
      *
-     * @param user the user.
+     * @param user       the user.
      * @param permission the permission, usually be (obj, act). It is actually the rule without the subject.
      * @return succeeds or not.
      */
@@ -322,7 +324,7 @@ public class Enforcer extends ManagementEnforcer {
     /**
      * hasPermissionForUser determines whether a user has a permission.
      *
-     * @param user the user.
+     * @param user       the user.
      * @param permission the permission, usually be (obj, act). It is actually the rule without the subject.
      * @return whether the user has the permission.
      */
@@ -338,7 +340,7 @@ public class Enforcer extends ManagementEnforcer {
     /**
      * hasPermissionForUser determines whether a user has a permission.
      *
-     * @param user the user.
+     * @param user       the user.
      * @param permission the permission, usually be (obj, act). It is actually the rule without the subject.
      * @return whether the user has the permission.
      */
@@ -349,13 +351,13 @@ public class Enforcer extends ManagementEnforcer {
     /**
      * getRolesForUserInDomain gets the roles that a user has inside a domain.
      *
-     * @param name the user.
+     * @param name   the user.
      * @param domain the domain.
      * @return the roles that the user has in the domain.
      */
     public List<String> getRolesForUserInDomain(String name, String domain) {
         try {
-            return model.model.get("g").get("g").rm.getRoles(name, domain);
+            return model.getRedisKey("g").get("g").rm.getRoles(name, domain);
         } catch (IllegalArgumentException e) {
             if (!"error: name does not exist".equals(e.getMessage())) {
                 throw e;
@@ -367,7 +369,7 @@ public class Enforcer extends ManagementEnforcer {
     /**
      * getPermissionsForUserInDomain gets permissions for a user or role inside a domain.
      *
-     * @param user the user.
+     * @param user   the user.
      * @param domain the domain.
      * @return the permissions, a permission is usually like (obj, act). It is actually the rule without the subject.
      */
@@ -379,8 +381,8 @@ public class Enforcer extends ManagementEnforcer {
      * addRoleForUserInDomain adds a role for a user inside a domain.
      * Returns false if the user already has the role (aka not affected).
      *
-     * @param user the user.
-     * @param role the role.
+     * @param user   the user.
+     * @param role   the role.
      * @param domain the domain.
      * @return succeeds or not.
      */
@@ -392,8 +394,8 @@ public class Enforcer extends ManagementEnforcer {
      * deleteRoleForUserInDomain deletes a role for a user inside a domain.
      * Returns false if the user does not have the role (aka not affected).
      *
-     * @param user the user.
-     * @param role the role.
+     * @param user   the user.
+     * @param role   the role.
      * @param domain the domain.
      * @return succeeds or not.
      */
@@ -452,7 +454,7 @@ public class Enforcer extends ManagementEnforcer {
     /**
      * getImplicitPermissionsForUserInDomain gets implicit permissions for a user or role in domain.
      *
-     * @param user the user.
+     * @param user   the user.
      * @param domain the domain.
      * @return implicit permissions for a user or role in domain.
      */
