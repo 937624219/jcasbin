@@ -80,8 +80,8 @@ public class CoreEnforcer {
      *
      * @return an empty model.
      */
-    public static Model newModel(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        return new Model(redisTemplate);
+    public static Model newModel(RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        return new Model(redisTemplate, tenantry);
     }
 
     /**
@@ -90,8 +90,8 @@ public class CoreEnforcer {
      * @param text the model text.
      * @return the model.
      */
-    public static Model newModel(String text, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        Model m = new Model(redisTemplate);
+    public static Model newModel(String text, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        Model m = new Model(redisTemplate, tenantry);
         m.loadModelFromText(text);
         return m;
     }
@@ -104,8 +104,8 @@ public class CoreEnforcer {
      *                  newModel(String text).
      * @return the model.
      */
-    public static Model newModel(String modelPath, String unused, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        Model m = new Model(redisTemplate);
+    public static Model newModel(String modelPath, String unused, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        Model m = new Model(redisTemplate, tenantry);
 
         if (!"".equals(modelPath)) {
             m.loadModel(modelPath);
@@ -120,8 +120,8 @@ public class CoreEnforcer {
      * Because the policy is attached to a model, so the policy is invalidated
      * and needs to be reloaded by calling LoadPolicy().
      */
-    public void loadModel(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        model = newModel(redisTemplate);
+    public void loadModel(RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        model = newModel(redisTemplate, tenantry);
         model.loadModel(this.modelPath);
         model.printModel();
         fm = FunctionMap.loadFunctionMap();
@@ -205,7 +205,8 @@ public class CoreEnforcer {
      * loadPolicy reloads the policy from file/database.
      */
     public void loadPolicy() {
-        model.clearPolicy();
+        // model.clearPolicy();
+        model.initPolicy();
         adapter.loadPolicy(model);
 
         model.printPolicy();
@@ -220,7 +221,8 @@ public class CoreEnforcer {
      * @param filter the filter used to specify which type of policy should be loaded.
      */
     public void loadFilteredPolicy(Object filter) {
-        model.clearPolicy();
+        // model.clearPolicy();
+        model.initPolicy();
         FilteredAdapter filteredAdapter;
         if (adapter instanceof FilteredAdapter) {
             filteredAdapter = (FilteredAdapter) adapter;

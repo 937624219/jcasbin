@@ -22,6 +22,7 @@ import java.util.Arrays;
 import static org.casbin.jcasbin.util.Util.splitCommaDelimited;
 
 public class Helper {
+
     public interface loadPolicyLineHandler<T, U> {
         void accept(T t, U u);
     }

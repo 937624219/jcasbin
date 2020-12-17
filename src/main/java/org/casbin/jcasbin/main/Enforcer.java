@@ -33,8 +33,8 @@ public class Enforcer extends ManagementEnforcer {
     /**
      * Enforcer is the default constructor.
      */
-    public Enforcer(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        this("", "", redisTemplate);
+    public Enforcer(RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        this("", "", redisTemplate, tenantry);
     }
 
     /**
@@ -43,8 +43,8 @@ public class Enforcer extends ManagementEnforcer {
      * @param modelPath  the path of the model file.
      * @param policyFile the path of the policy file.
      */
-    public Enforcer(String modelPath, String policyFile, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        this(modelPath, new FileAdapter(policyFile), redisTemplate);
+    public Enforcer(String modelPath, String policyFile, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        this(modelPath, new FileAdapter(policyFile), redisTemplate, tenantry);
     }
 
     /**
@@ -53,8 +53,8 @@ public class Enforcer extends ManagementEnforcer {
      * @param modelPath the path of the model file.
      * @param adapter   the adapter.
      */
-    public Enforcer(String modelPath, Adapter adapter, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        this(newModel(modelPath, "", redisTemplate), adapter);
+    public Enforcer(String modelPath, Adapter adapter, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        this(newModel(modelPath, "", redisTemplate, tenantry), adapter);
         this.modelPath = modelPath;
     }
 
@@ -93,8 +93,8 @@ public class Enforcer extends ManagementEnforcer {
      *
      * @param modelPath the path of the model file.
      */
-    public Enforcer(String modelPath, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        this(modelPath, "", redisTemplate);
+    public Enforcer(String modelPath, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        this(modelPath, "", redisTemplate, tenantry);
     }
 
     /**
@@ -104,8 +104,8 @@ public class Enforcer extends ManagementEnforcer {
      * @param policyFile the path of the policy file.
      * @param enableLog  whether to enable Casbin's log.
      */
-    public Enforcer(String modelPath, String policyFile, boolean enableLog, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        this(modelPath, new FileAdapter(policyFile), redisTemplate);
+    public Enforcer(String modelPath, String policyFile, boolean enableLog, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        this(modelPath, new FileAdapter(policyFile), redisTemplate, tenantry);
         this.enableLog(enableLog);
     }
 
@@ -117,7 +117,8 @@ public class Enforcer extends ManagementEnforcer {
      */
     public List<String> getRolesForUser(String name) {
         try {
-            return model.getRedisKey("g").get("g").rm.getRoles(name);
+            Assertion ast = model.getRedisKey("g").get("g");
+            return ast == null ? new ArrayList<>() : ast.rm.getRoles(name);
         } catch (IllegalArgumentException e) {
             if (!"error: name does not exist".equals(e.getMessage())) {
                 throw e;
@@ -134,7 +135,8 @@ public class Enforcer extends ManagementEnforcer {
      */
     public List<String> getUsersForRole(String name) {
         try {
-            return model.getRedisKey("g").get("g").rm.getUsers(name);
+            Assertion ast = model.getRedisKey("g").get("g");
+            return ast == null ? new ArrayList<>() : ast.rm.getUsers(name);
         } catch (IllegalArgumentException e) {
             if (!"error: name does not exist".equals(e.getMessage())) {
                 throw e;
@@ -357,7 +359,8 @@ public class Enforcer extends ManagementEnforcer {
      */
     public List<String> getRolesForUserInDomain(String name, String domain) {
         try {
-            return model.getRedisKey("g").get("g").rm.getRoles(name, domain);
+            Assertion ast = model.getRedisKey("g").get("g");
+            return ast == null ? new ArrayList<>() : ast.rm.getRoles(name, domain);
         } catch (IllegalArgumentException e) {
             if (!"error: name does not exist".equals(e.getMessage())) {
                 throw e;

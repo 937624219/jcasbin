@@ -14,6 +14,7 @@
 
 package org.casbin.jcasbin.model;
 
+import cn.hutool.core.util.StrUtil;
 import org.casbin.jcasbin.rbac.RoleManager;
 import org.casbin.jcasbin.util.Util;
 import org.springframework.data.redis.core.BoundHashOperations;
@@ -25,10 +26,20 @@ import java.util.Map;
 import java.util.Set;
 
 public class Policy {
+    private String tenantry = "default";
     private static final String CASBIN_REDIS_KEY = "JCASBIN_REDIS_KEY::";
     private final RedisTemplate<String, Map<String, Assertion>> redisTemplate;
 
-    public Policy(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
+    /**
+     * 默认构造函数
+     *
+     * @param redisTemplate RedisTemplate<String, Map<String, Assertion>> redisTemplate
+     * @param tenantry      多租户传递不同标识,默认default
+     */
+    public Policy(RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        if (StrUtil.isNotEmpty(tenantry)) {
+            this.tenantry = tenantry;
+        }
         this.redisTemplate = redisTemplate;
     }
 
@@ -414,7 +425,7 @@ public class Policy {
      * @return Map<String, Assertion>
      */
     public BoundHashOperations<String, String, Assertion> getRedisKey(String sec) {
-        return redisTemplate.boundHashOps(CASBIN_REDIS_KEY + sec);
+        return redisTemplate.boundHashOps(tenantry + CASBIN_REDIS_KEY + sec);
     }
 
     /**
@@ -423,15 +434,45 @@ public class Policy {
      * @return List<String>
      */
     public List<String> getAllKeys() {
-        Set<String> keys = redisTemplate.keys(CASBIN_REDIS_KEY + "*");
-        if (keys == null) {
+        Set<String> keys = redisTemplate.keys(tenantry + CASBIN_REDIS_KEY + "*");
+        if (keys == null || keys.isEmpty()) {
             return new ArrayList<>();
         }
         ArrayList<String> list = new ArrayList<>();
         for (String key : keys) {
-            key = key.replace(CASBIN_REDIS_KEY, "");
+            key = key.replace(tenantry + CASBIN_REDIS_KEY, "");
             list.add(key);
         }
         return list;
+    }
+
+    public void initPolicy() {
+        Map<String, Assertion> entriesP = this.getRedisKey("p").entries();
+        if (entriesP != null && !entriesP.isEmpty()) {
+            for (Map.Entry<String, Assertion> entry : entriesP.entrySet()) {
+                String key = entry.getKey();
+                Assertion ast = entry.getValue();
+                // 多节点不清理
+                if (ast.policy != null) {
+                    continue;
+                }
+                ast.policy = new ArrayList<>();
+                this.getRedisKey("p").put(key, ast);
+            }
+        }
+
+        Map<String, Assertion> entriesG = this.getRedisKey("g").entries();
+        if (entriesG != null && !entriesG.isEmpty()) {
+            for (Map.Entry<String, Assertion> entry : entriesG.entrySet()) {
+                String key = entry.getKey();
+                Assertion ast = entry.getValue();
+                // 多节点不清理
+                if (ast.policy != null) {
+                    continue;
+                }
+                ast.policy = new ArrayList<>();
+                this.getRedisKey("g").put(key, ast);
+            }
+        }
     }
 }

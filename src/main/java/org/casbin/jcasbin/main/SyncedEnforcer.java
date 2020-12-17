@@ -36,8 +36,8 @@ public class SyncedEnforcer extends Enforcer {
      * ;
      * SyncedEnforcer is the default constructor.
      */
-    public SyncedEnforcer(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        super(redisTemplate);
+    public SyncedEnforcer(RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        super(redisTemplate, tenantry);
     }
 
     /**
@@ -46,8 +46,8 @@ public class SyncedEnforcer extends Enforcer {
      * @param modelPath  the path of the model file.
      * @param policyFile the path of the policy file.
      */
-    public SyncedEnforcer(String modelPath, String policyFile, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        super(modelPath, policyFile, redisTemplate);
+    public SyncedEnforcer(String modelPath, String policyFile, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        super(modelPath, policyFile, redisTemplate, tenantry);
     }
 
     /**
@@ -56,8 +56,8 @@ public class SyncedEnforcer extends Enforcer {
      * @param modelPath the path of the model file.
      * @param adapter   the adapter.
      */
-    public SyncedEnforcer(String modelPath, Adapter adapter, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        super(modelPath, adapter, redisTemplate);
+    public SyncedEnforcer(String modelPath, Adapter adapter, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        super(modelPath, adapter, redisTemplate, tenantry);
     }
 
     /**
@@ -84,8 +84,8 @@ public class SyncedEnforcer extends Enforcer {
      *
      * @param modelPath the path of the model file.
      */
-    public SyncedEnforcer(String modelPath, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        super(modelPath, redisTemplate);
+    public SyncedEnforcer(String modelPath, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        super(modelPath, redisTemplate, tenantry);
     }
 
     /**
@@ -95,8 +95,8 @@ public class SyncedEnforcer extends Enforcer {
      * @param policyFile the path of the policy file.
      * @param enableLog  whether to enable Casbin's log.
      */
-    public SyncedEnforcer(String modelPath, String policyFile, boolean enableLog, RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        super(modelPath, policyFile, enableLog, redisTemplate);
+    public SyncedEnforcer(String modelPath, String policyFile, boolean enableLog, RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        super(modelPath, policyFile, enableLog, redisTemplate, tenantry);
     }
 
     /**

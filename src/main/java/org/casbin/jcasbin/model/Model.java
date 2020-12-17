@@ -28,22 +28,22 @@ import static org.casbin.jcasbin.util.Util.splitCommaDelimited;
  * Model represents the whole access control model.
  */
 public class Model extends Policy {
-    private static final Map<String, String> sectionNameMap;
+    private static final Map<String, String> SECTION_NAME_MAP;
 
     static {
-        sectionNameMap = new HashMap<>();
-        sectionNameMap.put("r", "request_definition");
-        sectionNameMap.put("p", "policy_definition");
-        sectionNameMap.put("g", "role_definition");
-        sectionNameMap.put("e", "policy_effect");
-        sectionNameMap.put("m", "matchers");
+        SECTION_NAME_MAP = new HashMap<>();
+        SECTION_NAME_MAP.put("r", "request_definition");
+        SECTION_NAME_MAP.put("p", "policy_definition");
+        SECTION_NAME_MAP.put("g", "role_definition");
+        SECTION_NAME_MAP.put("e", "policy_effect");
+        SECTION_NAME_MAP.put("m", "matchers");
     }
 
     // used by CoreEnforcer to detect changes to Model
     protected int modCount;
 
-    public Model(RedisTemplate<String, Map<String, Assertion>> redisTemplate) {
-        super(redisTemplate);
+    public Model(RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
+        super(redisTemplate, tenantry);
     }
 
     public int getModCount() {
@@ -51,7 +51,7 @@ public class Model extends Policy {
     }
 
     private boolean loadAssertion(Model model, Config cfg, String sec, String key) {
-        String value = cfg.getString(sectionNameMap.get(sec) + "::" + key);
+        String value = cfg.getString(SECTION_NAME_MAP.get(sec) + "::" + key);
         return model.addDef(sec, key, value);
     }
 
@@ -143,7 +143,7 @@ public class Model extends Policy {
      * @return the section text.
      */
     private String saveSectionToText(String sec) {
-        StringBuilder res = new StringBuilder("[" + sectionNameMap.get(sec) + "]\n");
+        StringBuilder res = new StringBuilder("[" + SECTION_NAME_MAP.get(sec) + "]\n");
 
         Map<String, Assertion> section = this.getRedisKey(sec).entries();
         if (section == null) {
