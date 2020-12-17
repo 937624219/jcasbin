@@ -29,6 +29,7 @@ public class Policy {
     private String tenantry = "default";
     private static final String CASBIN_REDIS_KEY = "JCASBIN_REDIS_KEY::";
     private final RedisTemplate<String, Map<String, Assertion>> redisTemplate;
+    public Map<String, Map<String, Assertion>> model;
 
     /**
      * 默认构造函数
@@ -49,15 +50,20 @@ public class Policy {
      * @param rm the role manager.
      */
     public void buildRoleLinks(RoleManager rm) {
-        Map<String, Assertion> entriesG = this.getRedisKey("g").entries();
-        if (entriesG != null && !entriesG.isEmpty()) {
-            for (Map.Entry<String, Assertion> entry : entriesG.entrySet()) {
-                String key = entry.getKey();
-                Assertion ast = entry.getValue();
+        if (model.containsKey("g")) {
+            for (Assertion ast : model.get("g").values()) {
                 ast.buildRoleLinks(rm);
-                this.getRedisKey("g").put(key, ast);
             }
         }
+        // Map<String, Assertion> entriesG = this.getRedisKey("g").entries();
+        // if (entriesG != null && !entriesG.isEmpty()) {
+        //     for (Map.Entry<String, Assertion> entry : entriesG.entrySet()) {
+        //         String key = entry.getKey();
+        //         Assertion ast = entry.getValue();
+        //         ast.buildRoleLinks(rm);
+        //         this.getRedisKey("g").put(key, ast);
+        //     }
+        // }
     }
 
     /**
@@ -121,25 +127,36 @@ public class Policy {
      * clearPolicy clears all current policy.
      */
     public void clearPolicy() {
-        Map<String, Assertion> entriesP = this.getRedisKey("p").entries();
-        if (entriesP != null && !entriesP.isEmpty()) {
-            for (Map.Entry<String, Assertion> entry : entriesP.entrySet()) {
-                String key = entry.getKey();
-                Assertion ast = entry.getValue();
+        if (model.containsKey("p")) {
+            for (Assertion ast : model.get("p").values()) {
                 ast.policy = new ArrayList<>();
-                this.getRedisKey("p").put(key, ast);
             }
         }
 
-        Map<String, Assertion> entriesG = this.getRedisKey("g").entries();
-        if (entriesG != null && !entriesG.isEmpty()) {
-            for (Map.Entry<String, Assertion> entry : entriesG.entrySet()) {
-                String key = entry.getKey();
-                Assertion ast = entry.getValue();
+        if (model.containsKey("g")) {
+            for (Assertion ast : model.get("g").values()) {
                 ast.policy = new ArrayList<>();
-                this.getRedisKey("g").put(key, ast);
             }
         }
+        // Map<String, Assertion> entriesP = this.getRedisKey("p").entries();
+        // if (entriesP != null && !entriesP.isEmpty()) {
+        //     for (Map.Entry<String, Assertion> entry : entriesP.entrySet()) {
+        //         String key = entry.getKey();
+        //         Assertion ast = entry.getValue();
+        //         ast.policy = new ArrayList<>();
+        //         this.getRedisKey("p").put(key, ast);
+        //     }
+        // }
+        //
+        // Map<String, Assertion> entriesG = this.getRedisKey("g").entries();
+        // if (entriesG != null && !entriesG.isEmpty()) {
+        //     for (Map.Entry<String, Assertion> entry : entriesG.entrySet()) {
+        //         String key = entry.getKey();
+        //         Assertion ast = entry.getValue();
+        //         ast.policy = new ArrayList<>();
+        //         this.getRedisKey("g").put(key, ast);
+        //     }
+        // }
     }
 
 

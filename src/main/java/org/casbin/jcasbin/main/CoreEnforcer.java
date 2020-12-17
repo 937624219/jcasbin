@@ -205,14 +205,17 @@ public class CoreEnforcer {
      * loadPolicy reloads the policy from file/database.
      */
     public void loadPolicy() {
-        // model.clearPolicy();
-        model.initPolicy();
+        model.clearPolicy();
+        // model.initPolicy();
         adapter.loadPolicy(model);
 
         model.printPolicy();
         if (autoBuildRoleLinks) {
             buildRoleLinks();
         }
+        // 初始化数据到redis
+        model.model.forEach((sec, value) -> value.forEach((ptype, asc) -> model.getRedisKey(sec).put(ptype, asc)));
+        model.model = null;
     }
 
     /**
@@ -221,8 +224,8 @@ public class CoreEnforcer {
      * @param filter the filter used to specify which type of policy should be loaded.
      */
     public void loadFilteredPolicy(Object filter) {
-        // model.clearPolicy();
-        model.initPolicy();
+        model.clearPolicy();
+        // model.initPolicy();
         FilteredAdapter filteredAdapter;
         if (adapter instanceof FilteredAdapter) {
             filteredAdapter = (FilteredAdapter) adapter;
@@ -238,6 +241,9 @@ public class CoreEnforcer {
         if (autoBuildRoleLinks) {
             buildRoleLinks();
         }
+        // 初始化数据到redis
+        model.model.forEach((sec, value) -> value.forEach((ptype, asc) -> model.getRedisKey(sec).put(ptype, asc)));
+        model.model = null;
     }
 
     /**

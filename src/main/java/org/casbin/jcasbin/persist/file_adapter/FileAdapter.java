@@ -17,6 +17,7 @@ package org.casbin.jcasbin.persist.file_adapter;
 import org.apache.commons.io.IOUtils;
 import org.casbin.jcasbin.exception.CasbinAdapterException;
 import org.casbin.jcasbin.exception.CasbinPolicyFileNotFoundException;
+import org.casbin.jcasbin.model.Assertion;
 import org.casbin.jcasbin.model.Model;
 import org.casbin.jcasbin.persist.Adapter;
 import org.casbin.jcasbin.persist.Helper;
@@ -26,6 +27,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -99,7 +101,11 @@ public class FileAdapter implements Adapter {
 
     private List<String> getModelPolicy(Model model, String sec) {
         List<String> policy = new ArrayList<>();
-        model.getRedisKey(sec).entries().forEach((k, v) -> {
+        Map<String, Assertion> entries = model.getRedisKey(sec).entries();
+        if (entries == null) {
+            return new ArrayList<>();
+        }
+        entries.forEach((k, v) -> {
             List<String> p = v.policy.parallelStream().map(x -> k + ", " + Util.arrayToString(x)).collect(Collectors.toList());
             policy.addAll(p);
             model.getRedisKey(sec).put(k, v);

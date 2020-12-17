@@ -14,7 +14,6 @@
 
 package org.casbin.jcasbin.persist;
 
-import org.casbin.jcasbin.model.Assertion;
 import org.casbin.jcasbin.model.Model;
 
 import java.util.Arrays;
@@ -40,8 +39,9 @@ public class Helper {
 
         String key = tokens[0];
         String sec = key.substring(0, 1);
-        Assertion ast = model.getRedisKey(sec).get(key);
-        ast.policy.add(Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length)));
-        model.getRedisKey(sec).put(key, ast);
+        model.model.get(sec).get(key).policy.add(Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length)));
+        // Assertion ast = model.getRedisKey(sec).get(key);
+        // ast.policy.add(Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length)));
+        // model.getRedisKey(sec).put(key, ast);
     }
 }

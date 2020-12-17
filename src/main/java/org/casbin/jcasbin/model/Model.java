@@ -44,6 +44,7 @@ public class Model extends Policy {
 
     public Model(RedisTemplate<String, Map<String, Assertion>> redisTemplate, String tenantry) {
         super(redisTemplate, tenantry);
+        model = new HashMap<>();
     }
 
     public int getModCount() {
@@ -81,7 +82,12 @@ public class Model extends Policy {
             ast.value = Util.removeComments(Util.escapeAssertion(ast.value));
         }
 
-        this.getRedisKey(sec).put(key, ast);
+        if (!model.containsKey(sec)) {
+            model.put(sec, new HashMap<>());
+        }
+
+        model.get(sec).put(key, ast);
+        // this.getRedisKey(sec).put(key, ast);
         modCount++;
         return true;
     }
