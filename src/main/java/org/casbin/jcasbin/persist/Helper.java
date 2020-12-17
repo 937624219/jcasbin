@@ -27,7 +27,7 @@ public class Helper {
     }
 
     public static void loadPolicyLine(String line, Model model) {
-        if (line.equals("")) {
+        if ("".equals(line)) {
             return;
         }
 

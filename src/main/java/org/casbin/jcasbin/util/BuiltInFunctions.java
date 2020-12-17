@@ -32,6 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BuiltInFunctions {
+    private BuiltInFunctions() {
+    }
 
     private static Pattern keyMatch2Pattern = Pattern.compile("(.*):[^/]+(.*)");
     private static Pattern keyMatch3Pattern = Pattern.compile("(.*)\\{[^/]+}(.*)");

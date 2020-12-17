@@ -1,5 +1,6 @@
 package org.casbin.jcasbin.rbac;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,7 +10,8 @@ import java.util.function.BiPredicate;
 /**
  * Represents all roles in a domain
  */
-class DomainRoles {
+class DomainRoles implements Serializable {
+    private static final long serialVersionUID = -5250996001416899157L;
     private Map<String, Role> roles = new HashMap<>();
 
     public void forEach(BiConsumer<? super String, ? super Role> action) {
@@ -33,7 +35,7 @@ class DomainRoles {
 
         if (matchingFunc != null) {
             roles.entrySet().stream().filter(roleEntry -> isRoleEntryMatchExists(roleEntry, name, matchingFunc))
-                    .forEach(roleEntry -> role.addRole(roleEntry.getValue()));
+                .forEach(roleEntry -> role.addRole(roleEntry.getValue()));
         }
 
         return role;

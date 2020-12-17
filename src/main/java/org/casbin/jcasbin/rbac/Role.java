@@ -1,12 +1,14 @@
 package org.casbin.jcasbin.rbac;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Role represents the data structure for a role in RBAC.
  */
-class Role {
+class Role implements Serializable {
+    private static final long serialVersionUID = -3361585333318199314L;
     private String name;
     private List<Role> roles;
 
