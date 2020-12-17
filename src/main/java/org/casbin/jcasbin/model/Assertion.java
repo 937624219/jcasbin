@@ -17,6 +17,7 @@ package org.casbin.jcasbin.model;
 import org.casbin.jcasbin.rbac.RoleManager;
 import org.casbin.jcasbin.util.Util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,8 @@ import java.util.List;
  * Assertion represents an expression in a section of the model.
  * For example: r = sub, obj, act
  */
-public class Assertion {
+public class Assertion implements Serializable {
+    private static final long serialVersionUID = 5285581955633766274L;
     public String key;
     public String value;
     public String[] tokens;
@@ -38,9 +40,9 @@ public class Assertion {
     protected void buildRoleLinks(RoleManager rm) {
         this.rm = rm;
         int count = 0;
-        for (int i = 0; i < value.length(); i ++) {
+        for (int i = 0; i < value.length(); i++) {
             if (value.charAt(i) == '_') {
-                count ++;
+                count++;
             }
         }
         for (List<String> rule : policy) {
@@ -67,9 +69,9 @@ public class Assertion {
     public void buildIncrementalRoleLinks(RoleManager rm, Model.PolicyOperations op, List<List<String>> rules) {
         this.rm = rm;
         int count = 0;
-        for (int i = 0; i < value.length(); i ++) {
+        for (int i = 0; i < value.length(); i++) {
             if (value.charAt(i) == '_') {
-                count ++;
+                count++;
             }
         }
         for (List<String> rule : rules) {

@@ -14,17 +14,14 @@
 
 package org.casbin.jcasbin.rbac;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BiPredicate;
-
 import org.casbin.jcasbin.util.Util;
 
-public class DefaultRoleManager implements RoleManager {
+import java.io.Serializable;
+import java.util.*;
+import java.util.function.BiPredicate;
+
+public class DefaultRoleManager implements RoleManager, Serializable {
+    private static final long serialVersionUID = 5669635812492476814L;
     private static String defaultDomain = "casbin::default";
     private Map<String, DomainRoles> allDomains;
     private int maxHierarchyLevel;
@@ -53,13 +50,12 @@ public class DefaultRoleManager implements RoleManager {
      * e.loadPolicy();
      * </pre>
      *
-     * 
-     * @param maxHierarchyLevel the maximized allowed RBAC hierarchy level.
-     * @param matchingFunc a matcher for supporting pattern in g
+     * @param maxHierarchyLevel  the maximized allowed RBAC hierarchy level.
+     * @param matchingFunc       a matcher for supporting pattern in g
      * @param domainMatchingFunc a matcher for supporting domain pattern in g
      */
     public DefaultRoleManager(int maxHierarchyLevel, final BiPredicate<String, String> matchingFunc,
-            final BiPredicate<String, String> domainMatchingFunc) {
+                              final BiPredicate<String, String> domainMatchingFunc) {
         allDomains = new HashMap<>();
         this.maxHierarchyLevel = maxHierarchyLevel;
 
