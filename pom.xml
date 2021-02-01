@@ -6,7 +6,7 @@
 
     <groupId>org.casbin</groupId>
     <artifactId>jcasbin</artifactId>
-    <version>1.6.0</version>
+    <version>1.6.0-SNAPSHOT</version>
 
     <name>JCasbin Authorization Library</name>
     <description>An authorization library that supports access control models like ACL, RBAC, ABAC in Java</description>
@@ -95,4 +95,10 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>rdc-snapshots</id>
+            <url>https://repo.rdc.aliyun.com/repository/112516-snapshot-lGpQXU/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
